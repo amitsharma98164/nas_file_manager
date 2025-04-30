@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   AppBar,
@@ -49,14 +49,17 @@ import {
   DriveFileMove,
   FileDownload,
   FolderZip,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
+import Login from './components/Login';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [files, setFiles] = useState([
     { id: 1, name: 'Documents', type: 'folder', path: '/Documents', size: '6GB', fileCount: 12 },
     { id: 2, name: 'Images', type: 'folder', path: '/Images', size: '8GB', fileCount: 20 },
@@ -382,8 +385,103 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    // Check for existing token on component mount
+    const checkAuth = () => {
+      const token = localStorage.getItem('authToken');
+      const expiry = localStorage.getItem('tokenExpiry');
+      
+      if (token && expiry) {
+        // Check if token is expired
+        if (new Date(expiry) > new Date()) {
+          try {
+            const decoded = JSON.parse(atob(token));
+            setIsAuthenticated(true);
+          } catch (error) {
+            console.error('Token decode error:', error);
+            handleLogout();
+          }
+        } else {
+          // Token expired, clear storage
+          handleLogout();
+        }
+      }
+    };
+
+    checkAuth();
+
+    // Set up interval to check token expiry
+    const interval = setInterval(() => {
+      const expiry = localStorage.getItem('tokenExpiry');
+      if (expiry && new Date(expiry) <= new Date()) {
+        handleLogout();
+        toast.error('Session expired. Please login again.');
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogin = (token) => {
+    try {
+      const decoded = JSON.parse(atob(token));
+      setIsAuthenticated(true);
+      toast.success(`Welcome ${decoded.username}!`);
+    } catch (error) {
+      console.error('Token decode error:', error);
+      toast.error('Login failed. Please try again.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tokenExpiry');
+    setIsAuthenticated(false);
+    setCurrentPath('/');
+    setSelectedFile(null);
+    setSearchQuery('');
+    toast.info('Logged out successfully');
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <Box sx={{ display: 'flex', height: '100vh' }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            NAS File Manager
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <TextField
+              size="small"
+              placeholder="Search files..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: 1,
+                '& .MuiInputBase-input': { color: 'white' },
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+              }}
+            />
+            <IconButton color="inherit" onClick={handleLogout}>
+              <LogoutIcon />
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </AppBar>
       {/* Hidden file input for upload */}
       <input
         type="file"
