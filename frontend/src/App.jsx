@@ -57,6 +57,7 @@ import './App.css';
 import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 import Login from './components/Login';
+import CreateNewButton from './components/CreateNewButton';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -443,6 +444,22 @@ function App() {
     toast.info('Logged out successfully');
   };
 
+  const handleCreateFolderClick = () => {
+    setCreateFolderDialog(true);
+  };
+
+  const handleCreateFileClick = () => {
+    setCreateFileDialog(true);
+  };
+
+  const handleUploadClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.onchange = handleUpload;
+    input.click();
+  };
+
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;
   }
@@ -522,18 +539,11 @@ function App() {
         <Divider sx={{ backgroundColor: '#2d3546' }} />
         <List>
           <ListItem sx={{ mb: 1 }}>
-            <Button
-              variant="contained"
-              startIcon={<CreateNewFolder />}
-              fullWidth
-              onClick={() => setCreateFolderDialog(true)}
-              sx={{ 
-                backgroundColor: '#3699ff',
-                '&:hover': { backgroundColor: '#1a82ff' }
-              }}
-            >
-              Create New
-            </Button>
+            <CreateNewButton
+              onCreateFolder={() => setCreateFolderDialog(true)}
+              onCreateFile={() => setCreateFileDialog(true)}
+              onUploadFile={() => uploadInput?.click()}
+            />
           </ListItem>
           {sidebarItems.map((item) => (
             <ListItem
@@ -566,122 +576,10 @@ function App() {
           flexGrow: 1,
           bgcolor: '#f5f6fa',
           ml: { sm: '260px' },
-          width: { sm: `calc(100% - 260px)` }
+          width: { sm: `calc(100% - 260px)` },
+          pt: '64px' // Add padding top to account for fixed header
         }}
       >
-        <AppBar 
-          position="static" 
-          color="default" 
-          elevation={1}
-          sx={{ 
-            width: '100%',
-            ml: 0
-          }}
-        >
-          <Toolbar sx={{ 
-            flexDirection: { xs: 'column', sm: 'row' },
-            py: { xs: 1, sm: 0 },
-            gap: { xs: 1, sm: 0 }
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              width: '100%',
-              justifyContent: 'space-between'
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <IconButton
-                  color="inherit"
-                  edge="start"
-                  onClick={() => setSidebarOpen(true)}
-                  sx={{ mr: 1, display: { sm: 'none' } }}
-                >
-                  <MenuIcon />
-                </IconButton>
-                <Typography 
-                  variant="subtitle1" 
-                  sx={{ 
-                    color: '#5e6278',
-                    fontSize: { xs: '1.1rem', sm: '1rem' }
-                  }}
-                >
-                  {pathParts.length === 0 ? 'My Files' : pathParts.join(' / ')}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleActionClick}
-                  startIcon={<CreateNewFolder />}
-                  size="small"
-                  sx={{ 
-                    backgroundColor: '#3699ff',
-                    '&:hover': { backgroundColor: '#1a82ff' },
-                    py: '6px'
-                  }}
-                >
-                  New
-                </Button>
-                <IconButton 
-                  color="inherit" 
-                  onClick={() => uploadInput?.click()}
-                  size="small"
-                >
-                  <Upload />
-                </IconButton>
-              </Box>
-            </Box>
-
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 2,
-              width: '100%',
-              alignItems: 'center'
-            }}>
-              <TextField
-                size="small"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{
-                  flexGrow: 1,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: '#fff',
-                    height: { xs: '36px', sm: '40px' }
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    py: { xs: '6px', sm: '8.5px' }
-                  }
-                }}
-                InputProps={{
-                  startAdornment: <Search sx={{ color: '#5e6278', mr: 1 }} />,
-                }}
-              />
-
-              <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleActionClick}
-                  startIcon={<CreateNewFolder />}
-                  sx={{ 
-                    backgroundColor: '#3699ff',
-                    '&:hover': { backgroundColor: '#1a82ff' }
-                  }}
-                >
-                  New
-                </Button>
-                <IconButton 
-                  color="inherit" 
-                  onClick={() => uploadInput?.click()}
-                >
-                  <Upload />
-                </IconButton>
-              </Box>
-            </Box>
-          </Toolbar>
-        </AppBar>
-
         <Box sx={{ 
           p: { xs: 1, sm: 2, md: 3 }, 
           overflow: 'auto', 
